@@ -1,0 +1,205 @@
+package com.tedu.show;
+
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+
+import com.tedu.controller.GameListener;
+import com.tedu.controller.GameThread;
+
+/**
+ * 游戏窗体
+ * 主要功能
+ * 1、关闭，显示，最大最小化
+ * 2、嵌入面板，启动主线程
+ * 用户打开窗体，窗体会以上一次窗体的样式打开
+ * 
+ */
+public class DreamGardenFrame extends JFrame{
+	/**
+	 * 单个箱子像素：48*48
+	 * 计划放置格子：15*13
+	 * 地图大小：720*624（跟窗体大小有偏差）
+	 */
+	public static int GameX = 884;
+	public static int GameY = 710;
+
+	// 当前正在显示的面板
+	private JPanel jPanel = null; 
+	// 键盘监听
+	private KeyListener keyListener = null;
+	// 鼠标监听
+	private MouseMotionListener mouseMotionListener = null;
+	private MouseListener mouseListener = null;
+	
+	// 游戏主线程
+	private Thread thread = null;
+	
+	public static DreamGardenFrame gj = new DreamGardenFrame();
+	//主面板
+	public static DreamEntryPanel jp1;
+	//挑选地图面板
+	public static ModeSelectPanel jp2;
+	//游戏面板
+	public static GardenMainPanel jp3;
+	//结束面板
+	public static DreamOverPanel jp4;
+	//单人模式选择角色面板
+	public static CharacterGardenPanel1 jp5;
+	//双人模式选择角色面板
+	public static CharacterGardenPanel2 jp6;
+	//状态面板
+//	public static statusJPanel jp7;
+	//面板名字，通信面板刷新需要
+	public static String Name;
+	
+	public DreamGardenFrame() {
+		init();
+	}
+	
+	// 初始化窗体
+	protected void init() {
+		// 设置窗体大小
+		this.setSize(GameX, GameY);
+		// 设置窗体标题
+		this.setTitle("奇想庭园：绮梦对决"); // 放到配置文件
+		// 窗体关闭方式：关闭窗体时，同时终止程序
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		// 窗体居中显示
+		this.setLocationRelativeTo(null);
+	}
+	
+	// 窗体布局
+	public void addButton() {
+		
+	}
+	
+	public static void setJPanel(String Name) {
+	    setJPanel(Name,0,1,2);
+	}
+	//设置面板
+	public static void setJPanel(String Name, int mode) {
+		DreamGardenFrame.Name=Name;
+	
+
+	}
+	
+	//设置面板
+	public static void setJPanel(String Name, int mode, int character1, int character2) {
+		if (Name.equals("MainJPanel")) {
+			jp1 = new DreamEntryPanel();
+			gj.setjPanel(jp1);
+			gj.start();
+		}
+		if (Name.equals("SelectJPanel")) {
+			jp2 = new ModeSelectPanel(mode, character1, character2);
+			gj.setjPanel(jp2);
+			gj.start();
+		}
+		if (Name.equals("GameMainJPanel")) {
+//			实例化监听
+			GameListener listener = new GameListener();
+//			实例化主线程
+			GameThread th = new GameThread(ModeSelectPanel.map, mode, character1, character2);
+			jp3 = new GardenMainPanel();
+			gj.setjPanel(jp3);
+			gj.setKeyListener(listener);
+			gj.setThread(th, 0);	
+			gj.start();
+			gj.setFocusable(true);
+		}
+//		if (Name.equals("statusJPanel")) {
+//			GameListener listener = new GameListener();
+//			gj.setjPanel(jp3);
+//			gj.start();
+//		}
+		if (Name.equals("OverJPanel")) {
+			jp4 = new DreamOverPanel();
+			gj.setjPanel(jp4);
+			gj.setThread(null, 1);
+			gj.start();
+		}
+		if (Name.equals("CharacterSelectJPanel")) {
+		    jp5 = new CharacterGardenPanel1(mode);
+		    gj.setjPanel(jp5);
+		    gj.start();
+		}
+		if (Name.equals("CharacterSelectJPanel2")) {
+		    jp6 = new CharacterGardenPanel2(mode);
+		    gj.setjPanel(jp6);
+		    gj.start();
+		}
+		gj.setVisible(false);
+		gj.setVisible(true);
+	}
+	
+	// 窗体启动方法
+	public void start() {
+		if (jPanel != null) {
+			this.add(jPanel);
+		}
+		if (keyListener != null) {
+			this.addKeyListener(keyListener);
+		}
+		if (mouseMotionListener != null) {
+			this.addMouseMotionListener(mouseMotionListener);
+		}
+		if (mouseListener != null) {
+			this.addMouseListener(mouseListener);
+		}
+		if (thread != null) {
+			System.out.println();
+			thread.start();
+		}
+		// 界面刷新，显示窗体
+		this.setVisible(true);
+		
+		// 做了类型判断，强制类型不会出错
+		if (jPanel instanceof Runnable) {
+			// 启动子线程来不断刷新界面
+			new Thread((Runnable) jPanel).start();
+		}
+	}
+
+	/*
+	 * set注入：SSM框架通过set方法注入配置文件中读取的数据，将配置文件中的数据
+	 * 赋值为类的属性
+	 * 构造注入：需要配合构造方法
+	 * spring 中ioc进行对象的自动生成，管理
+	 */
+	public void setjPanel(JPanel jPanel) {
+		if(this.jPanel != null) {
+			this.remove(this.jPanel);
+		}
+		this.jPanel = jPanel;
+	}
+	
+	public void setKeyListener(KeyListener keyListener) {
+		this.keyListener = keyListener;
+	}
+
+	public void setMouseMotionListener(MouseMotionListener mouseMotionListener) {
+		this.mouseMotionListener = mouseMotionListener;
+	}
+
+	public void setMouseListener(MouseListener mouseListener) {
+		this.mouseListener = mouseListener;
+	}
+
+	public void setThread(Thread thread,int num) {
+//		if(num == 1) {
+//			this.thread.interrupt();
+//		}
+		this.thread = thread;
+	}
+
+	public Thread getThread() {
+		return thread;
+	}
+	
+	
+}
